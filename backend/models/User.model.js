@@ -27,13 +27,9 @@ const userSchema = new mongoose.Schema(
             type: Date,
             default: Date.now,
         },
-        isActive: {
-            type: Boolean,
-            default: true,
-        },
         role: {
             type: String,
-            enum: ['user', 'admin'],
+            enum: ['user', 'admin', 'artisan'],
             default: 'user',
         },
         verificationToken: {

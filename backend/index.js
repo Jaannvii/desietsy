@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 
 db();
 
-app.use('api/desietsy/user', userRouter);
+app.use('/api/desietsy', userRouter);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
