@@ -28,7 +28,6 @@ const registerUser = async (req, res) => {
             email,
             password,
         });
-
         if (!user) {
             return res.status(400).json({ message: 'Error creating user' });
         }
@@ -78,23 +77,35 @@ const verifyUser = async (req, res) => {
 
     user.isVerified = true;
     user.verificationToken = undefined;
+
     await user.save();
+
+    if (!user.isVerified) {
+        return res.status(400).json({ message: 'Email verification failed' });
+    }
+
+    return res.status(200).json({
+        message: 'Email verified successfully',
+        user: {
+            id: user._id,
+            username: user.username,
+        },
+    });
 };
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
-
     if (!email || !password) {
         return res.status(400).json({ message: 'All fields are required' });
     }
 
     try {
-        const user = User.findOne({ email });
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'User not found' });
         }
 
-        const isMatch = bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -104,7 +115,7 @@ const loginUser = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: '1d',
+            expiresIn: process.env.JWT_EXPIRE_TIME,
         });
 
         const cookieOptions = {
@@ -114,7 +125,7 @@ const loginUser = async (req, res) => {
         };
         res.cookie('token', token, cookieOptions);
 
-        res.status(200).json({
+        return res.status(200).json({
             message: 'Login successful',
             user: {
                 id: user._id,
@@ -122,8 +133,127 @@ const loginUser = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error(error);
         return res.status(400).json({ message: 'Error logging in user' });
     }
 };
 
-export { registerUser, verifyUser, loginUser };
+const getMe = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json({
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({ message: 'Error fetching user data' });
+    }
+};
+
+const logoutUser = async (req, res) => {
+    res.clearCookie('token');
+    return res.status(200).json({ message: 'Logout successful' });
+};
+
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+
+        await user.save();
+
+        var transport = nodemailer.createTransport({
+            host: 'sandbox.smtp.mailtrap.io',
+            port: 2525,
+            auth: {
+                user: process.env.MAILTRAP_USER,
+                pass: process.env.MAILTRAP_PASS,
+            },
+        });
+
+        const mailOptions = {
+            from: `"${process.env.MAILTRAP_SENDERNAME}" <${process.env.MAILTRAP_SENDEREMAIL}>`,
+            to: user.email,
+            subject: 'Password Reset',
+            text:
+                `Please click on the following link:\n\n` +
+                `${process.env.BASE_URL}/api/desietsy/reset-password/${resetToken}`,
+        };
+        await transport.sendMail(mailOptions);
+
+        return res.status(200).json({
+            message: 'Password reset link is sent to your email',
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error sending reset email' });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { newPassword, password } = req.body;
+    if (!token || !newPassword) {
+        return res.status(400).json({ message: 'Invalid request' });
+    }
+    if (newPassword === password) {
+        return res
+            .status(400)
+            .json({
+                message: 'New password cannot be the same as the old password',
+            });
+    }
+
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        return res.status(200).json({ message: 'Password reset successful' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error resetting password' });
+    }
+};
+
+const changePassword = async (req, res) => {};
+
+export {
+    registerUser,
+    verifyUser,
+    loginUser,
+    getMe,
+    logoutUser,
+    forgotPassword,
+    resetPassword,
+    changePassword,
+};
