@@ -215,6 +215,11 @@ const resetPassword = async (req, res) => {
     if (!token || !newPassword) {
         return res.status(400).json({ message: 'Invalid request' });
     }
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            message: 'New password must be at least 6 characters long',
+        });
+    }
 
     try {
         const user = await User.findOne({
@@ -225,7 +230,9 @@ const resetPassword = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        user.password = newPassword;
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.password = hashedPassword;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
 
@@ -269,7 +276,9 @@ const changePassword = async (req, res) => {
                 .json({ message: 'Current password is incorrect' });
         }
 
-        user.password = newPassword;
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.password = hashedPassword;
         await user.save();
 
         return res
