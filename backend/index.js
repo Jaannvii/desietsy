@@ -5,6 +5,7 @@ import db from './config/db.js';
 import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/auth.route.js';
+import productRouter from './routes/product.route.js';
 
 dotenv.config();
 
@@ -25,7 +26,8 @@ app.use(cookieParser());
 
 db();
 
-app.use('/api/desietsy', userRouter);
+app.use('/api/desietsy/auth', userRouter);
+app.use('/api/desietsy/product', productRouter);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);

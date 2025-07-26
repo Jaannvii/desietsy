@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const registerUser = async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
 
     if (!username || !password || !email) {
         res.status(400).json({ message: 'All fields are required' });
@@ -27,6 +27,7 @@ const registerUser = async (req, res) => {
             username,
             email,
             password,
+            role: role || 'user',
         });
         if (!user) {
             return res.status(400).json({ message: 'Error creating user' });
@@ -245,51 +246,6 @@ const resetPassword = async (req, res) => {
     }
 };
 
-const changePassword = async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
-        return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    if (newPassword.length < 6) {
-        return res.status(400).json({
-            message: 'New password must be at least 6 characters long',
-        });
-    }
-
-    if (oldPassword === newPassword) {
-        return res.status(400).json({
-            message: 'New password must be different from old password',
-        });
-    }
-
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const isMatch = await bcrypt.compare(oldPassword, user.password);
-        if (!isMatch) {
-            return res
-                .status(400)
-                .json({ message: 'Current password is incorrect' });
-        }
-
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-        user.password = hashedPassword;
-        await user.save();
-
-        return res
-            .status(200)
-            .json({ message: 'Password changed successfully' });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error changing password' });
-    }
-};
-
 export {
     registerUser,
     verifyUser,
@@ -298,5 +254,4 @@ export {
     logoutUser,
     forgotPassword,
     resetPassword,
-    changePassword,
 };

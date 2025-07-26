@@ -25,12 +25,11 @@ const artisanSchema = new mongoose.Schema({
         trim: true,
     },
     address: {
-        street: String,
-        city: String,
-        state: String,
-        postalCode: String,
-        country: String,
-        required: true,
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        state: { type: String, required: true },
+        postalCode: { type: String, required: true },
+        country: { type: String, required: true },
     },
     joinedAt: {
         type: Date,

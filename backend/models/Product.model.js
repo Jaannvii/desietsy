@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Artisan from './Artisan.model.js';
 
 const productSchema = new mongoose.Schema({
     name: {
