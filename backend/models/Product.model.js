@@ -24,36 +24,9 @@ const productSchema = new mongoose.Schema({
     },
     artisanId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Artisan',
+        ref: 'User',
         required: true,
     },
-    ratings: {
-        type: Number,
-        default: 0,
-    },
-    reviews: [
-        {
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
-                required: true,
-            },
-            comment: {
-                type: String,
-                required: true,
-            },
-            rating: {
-                type: Number,
-                required: true,
-                min: 1,
-                max: 5,
-            },
-            createdAt: {
-                type: Date,
-                default: Date.now,
-            },
-        },
-    ],
     stock: {
         type: Number,
         default: 0,

@@ -1,4 +1,4 @@
-import User from '../models/user.model.js';
+import User from '../models/User.model.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
@@ -128,6 +128,7 @@ const loginUser = async (req, res) => {
 
         return res.status(200).json({
             message: 'Login successful',
+            token,
             user: {
                 id: user._id,
                 username: user.username,

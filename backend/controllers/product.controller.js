@@ -4,7 +4,7 @@ const createProduct = async (req, res) => {
     try {
         const { name, description, price, category, image, stock, discount } =
             req.body;
-        const artisanId = req.user?._id || req.body.artisanId;
+        const artisanId = req.user._id;
 
         if (!artisanId) {
             return res.status(401).json({
@@ -71,7 +71,7 @@ const createProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find().populate('artisanId', 'name');
+        const products = await Product.find();
         return res.status(200).json(products);
     } catch (error) {
         return res.status(500).json({

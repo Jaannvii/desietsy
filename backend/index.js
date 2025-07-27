@@ -6,11 +6,13 @@ import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/auth.route.js';
 import productRouter from './routes/product.route.js';
+import passport from 'passport';
+import './config/passport.js';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 app.use(
     cors({
@@ -28,6 +30,19 @@ db();
 
 app.use('/api/desietsy/auth', userRouter);
 app.use('/api/desietsy/product', productRouter);
+
+app.get(
+    '/auth/google',
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+app.get(
+    '/auth/google/callback',
+    passport.authenticate('google', { session: false }),
+    (req, res) => {
+        const token = req.user.token;
+        res.redirect(`http://localhost:3000/products?token=${token}`);
+    }
+);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);

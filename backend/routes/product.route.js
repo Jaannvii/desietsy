@@ -3,10 +3,10 @@ import {
     createProduct,
     getProducts,
 } from '../controllers/product.controller.js';
-import { isLoggedIn } from '../middleware/auth.middleware.js';
+import { isLoggedIn, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
-router.post('/create', isLoggedIn, createProduct);
-router.get('/', getProducts);
+router.post('/create', isLoggedIn, authorize('Artisan'), createProduct);
+router.get('/', isLoggedIn, getProducts);
 
 export default router;
