@@ -80,4 +80,76 @@ const getProducts = async (req, res) => {
     }
 };
 
-export { createProduct, getProducts };
+const getProductById = async (req, res) => {
+    try {
+        const productId = req.params.id;
+
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({
+                message: 'Product not found',
+            });
+        }
+
+        return res.status(200).json(product);
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error fetching product',
+        });
+    }
+};
+
+const updateProduct = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const updates = req.body;
+
+        const product = await Product.findByIdAndUpdate(productId, updates, {
+            new: true,
+        });
+        if (!product) {
+            return res.status(404).json({
+                message: 'Product not found',
+            });
+        }
+
+        return res.status(200).json({
+            message: 'Product updated successfully',
+            product,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error updating product',
+        });
+    }
+};
+
+const deleteProduct = async (req, res) => {
+    try {
+        const productId = req.params.id;
+
+        const product = await Product.findByIdAndDelete(productId);
+        if (!product) {
+            return res.status(404).json({
+                message: 'Product not found',
+            });
+        }
+
+        return res.status(200).json({
+            message: 'Product deleted successfully',
+            productId,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error deleting product',
+        });
+    }
+};
+
+export {
+    createProduct,
+    getProducts,
+    getProductById,
+    updateProduct,
+    deleteProduct,
+};
