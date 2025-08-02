@@ -31,6 +31,10 @@ const artisanSchema = new mongoose.Schema({
         postalCode: { type: String, required: true },
         country: { type: String, required: true },
     },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
     joinedAt: {
         type: Date,
         default: Date.now,

@@ -1,13 +1,18 @@
-import express from express;
+import express from 'express';
+import {
+    createOrder,
+    getOrders,
+    getOrderById,
+    updateOrderStatus,
+    deleteOrder,
+} from '../controllers/order.controller.js';
+import { isLoggedIn, authorize } from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const orderController = require("../controllers/order.controller");
-const { verifyUser, verifyAdmin } = require("../middleware/authMiddleware");
+router.post('/create', isLoggedIn, createOrder);
+router.get('/', isLoggedIn, getOrders);
+router.get('/:id', isLoggedIn, getOrderById);
+router.put('/:id/status', isLoggedIn, authorize('Admin'), updateOrderStatus);
+router.delete('/:id', isLoggedIn, authorize('Admin'), deleteOrder);
 
-router.post("/", verifyUser, orderController.createOrder);
-router.get("/my", verifyUser, orderController.getUserOrders);
-router.get("/:orderId", verifyUser, orderController.getOrderById);
-router.get("/", verifyAdmin, orderController.getAllOrders);
-router.put("/:orderId/status", verifyAdmin, orderController.updateOrderStatus);
-router.delete("/:orderId", verifyAdmin, orderController.deleteOrder);
-
-module.exports = router;
+export default router;

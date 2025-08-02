@@ -13,6 +13,6 @@ router.post('/create', isLoggedIn, authorize('Artisan'), createProduct);
 router.get('/', isLoggedIn, getProducts);
 router.get('/:id', isLoggedIn, getProductById);
 router.put('/:id', isLoggedIn, authorize('Artisan'), updateProduct);
-router.delete('/:id', isLoggedIn, authorize('Artisan'), deleteProduct);
+router.delete('/:id', isLoggedIn, authorize('Admin', 'Artisan'), deleteProduct);
 
 export default router;

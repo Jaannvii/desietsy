@@ -24,10 +24,50 @@ const orderSchema = new mongoose.Schema(
             type: Number,
             required: true,
         },
+        shippingInfo: {
+            address: {
+                type: String,
+                required: true,
+            },
+            city: {
+                type: String,
+                required: true,
+            },
+            state: {
+                type: String,
+                required: true,
+            },
+            postalCode: {
+                type: String,
+                required: true,
+            },
+            country: {
+                type: String,
+                required: true,
+            },
+        },
+        paymentMethod: {
+            type: String,
+            enum: ['Credit Card', 'PayPal', 'Cash on Delivery'],
+            required: true,
+        },
         paymentStatus: {
             type: String,
-            enum: ['Packed', 'Shipped', 'Delivered'],
-            default: 'Packed',
+            enum: ['Pending', 'Completed', 'Failed'],
+            default: 'Pending',
+        },
+        orderStatus: {
+            type: String,
+            enum: ['Pending', 'Completed', 'Cancelled'],
+            default: 'Pending',
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
         },
     },
     { timestamps: true }

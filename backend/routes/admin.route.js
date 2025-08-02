@@ -1,13 +1,28 @@
-import express from "express";
+import express from 'express';
+import {
+    getAllArtisans,
+    verifyArtisan,
+    getAllProducts,
+    approveProduct,
+    getAllOrders,
+} from '../controllers/admin.controller.js';
+import { isLoggedIn, authorize } from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const adminController = require("../controllers/admin.controller");
-const { verifyAdmin } = require("../middleware/authMiddleware");
+router.get('/artisans', isLoggedIn, authorize('Admin'), getAllArtisans);
+router.put(
+    '/verify-artisan/:id',
+    isLoggedIn,
+    authorize('Admin'),
+    verifyArtisan
+);
+router.get('/products', isLoggedIn, authorize('Admin'), getAllProducts);
+router.put(
+    '/approve-product/:id',
+    isLoggedIn,
+    authorize('Admin'),
+    approveProduct
+);
+router.get('/orders', isLoggedIn, authorize('Admin'), getAllOrders);
 
-router.post("/login", adminController.loginAdmin);
-router.get("/users", verifyAdmin, adminController.getAllUsers);
-router.get("/products", verifyAdmin, adminController.getAllProducts);
-router.put("/verify-artisan/:artisanId", verifyAdmin, adminController.verifyArtisan);
-router.delete("/user/:userId", verifyAdmin, adminController.deleteUser);
-router.delete("/product/:productId", verifyAdmin, adminController.deleteProduct);
-
-module.exports = router;
+export default router;

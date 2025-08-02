@@ -60,8 +60,10 @@ const registerUser = async (req, res) => {
         return res
             .status(201)
             .json({ message: `${username} registered successfully` });
-    } catch (error) {
-        return res.status(400).json({ message: 'Error registering user' });
+    } catch (err) {
+        return res
+            .status(400)
+            .json({ message: 'Error registering user', error: err.message });
     }
 };
 
@@ -134,9 +136,10 @@ const loginUser = async (req, res) => {
                 username: user.username,
             },
         });
-    } catch (error) {
-        console.error(error);
-        return res.status(400).json({ message: 'Error logging in user' });
+    } catch (err) {
+        return res
+            .status(400)
+            .json({ message: 'Error logging in user', error: err.message });
     }
 };
 
@@ -155,8 +158,10 @@ const getMe = async (req, res) => {
                 role: user.role,
             },
         });
-    } catch (error) {
-        return res.status(400).json({ message: 'Error fetching user data' });
+    } catch (err) {
+        return res
+            .status(400)
+            .json({ message: 'Error fetching user data', error: err.message });
     }
 };
 
@@ -205,9 +210,10 @@ const forgotPassword = async (req, res) => {
         return res.status(200).json({
             message: 'Password reset link is sent to your email',
         });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error sending reset email' });
+    } catch (err) {
+        return res
+            .status(500)
+            .json({ message: 'Error sending reset email', error: err.message });
     }
 };
 
@@ -241,9 +247,10 @@ const resetPassword = async (req, res) => {
         await user.save();
 
         return res.status(200).json({ message: 'Password reset successful' });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error resetting password' });
+    } catch (err) {
+        return res
+            .status(500)
+            .json({ message: 'Error resetting password', error: err.message });
     }
 };
 

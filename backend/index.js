@@ -6,6 +6,9 @@ import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/auth.route.js';
 import productRouter from './routes/product.route.js';
+import orderRouter from './routes/order.route.js';
+import adminRouter from './routes/admin.route.js';
+
 import passport from 'passport';
 import './config/passport.js';
 
@@ -30,6 +33,8 @@ db();
 
 app.use('/api/desietsy/auth', userRouter);
 app.use('/api/desietsy/product', productRouter);
+app.use('/api/desietsy/order', orderRouter);
+app.use('/api/desietsy/admin', adminRouter);
 
 app.get(
     '/auth/google',
