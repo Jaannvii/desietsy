@@ -25,7 +25,7 @@ const isLoggedIn = async (req, res, next) => {
 const authorize = (...roles) => {
     return async (req, res, next) => {
         const user = await User.findById(req.user._id);
-        if (!user || !roles.includes(req.user.role)) {
+        if (!user || !roles.includes(user.role)) {
             return res.status(400).json({ message: 'Access denied' });
         }
 

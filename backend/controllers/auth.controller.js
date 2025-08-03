@@ -1,4 +1,5 @@
 import User from '../models/User.model.js';
+import Artisan from '../models/Artisan.model.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
@@ -31,6 +32,30 @@ const registerUser = async (req, res) => {
         });
         if (!user) {
             return res.status(400).json({ message: 'Error creating user' });
+        }
+
+        if (role === 'Artisan') {
+            const artisan = await Artisan.create({
+                userId: user._id,
+                shopName: '',
+                bio: '',
+                contactNumber: '',
+                address: {
+                    street: '',
+                    city: '',
+                    state: '',
+                    postalCode: '',
+                    country: '',
+                },
+                isVerified: false,
+            });
+            if (!artisan) {
+                return res
+                    .status(400)
+                    .json({ message: 'Error creating artisan profile' });
+            }
+
+            await artisan.save();
         }
 
         const token = crypto.randomBytes(20).toString('hex');
@@ -117,9 +142,13 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Email not verified' });
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: process.env.JWT_EXPIRE_TIME,
-        });
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRE_TIME,
+            }
+        );
 
         const cookieOptions = {
             httpOnly: true,

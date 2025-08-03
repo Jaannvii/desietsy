@@ -9,13 +9,13 @@ import {
 import { isLoggedIn, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
-router.get('/artisans', isLoggedIn, authorize('Admin'), getAllArtisans);
 router.put(
     '/verify-artisan/:id',
     isLoggedIn,
     authorize('Admin'),
     verifyArtisan
 );
+router.get('/artisans', isLoggedIn, authorize('Admin'), getAllArtisans);
 router.get('/products', isLoggedIn, authorize('Admin'), getAllProducts);
 router.put(
     '/approve-product/:id',

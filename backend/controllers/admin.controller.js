@@ -3,22 +3,10 @@ import Artisan from '../models/Artisan.model.js';
 import Product from '../models/Product.model.js';
 import Order from '../models/Order.model.js';
 
-const getAllArtisans = async (req, res) => {
-    try {
-        const artisans = await Artisan.find();
-        res.status(200).json(artisans);
-    } catch (err) {
-        res.status(500).json({
-            message: 'Error fetching artisans',
-            error: err.message,
-        });
-    }
-};
-
 const verifyArtisan = async (req, res) => {
     try {
         const artisanId = req.params.id;
-        const artisan = await User.findByIdAndUpdate(
+        const artisan = await Artisan.findByIdAndUpdate(
             artisanId,
             { isVerified: true },
             { new: true }
@@ -27,10 +15,31 @@ const verifyArtisan = async (req, res) => {
             return res.status(400).json({ message: 'Artisan not found' });
         }
 
-        res.status(200).json({ message: 'Artisan verified', artisan });
+        await User.findByIdAndUpdate(
+            artisan.userId,
+            { isVerified: true },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: 'Artisan verified successfully',
+            artisan,
+        });
     } catch (err) {
         res.status(500).json({
             message: 'Verification failed',
+            error: err.message,
+        });
+    }
+};
+
+const getAllArtisans = async (req, res) => {
+    try {
+        const artisans = await Artisan.find();
+        res.status(200).json(artisans);
+    } catch (err) {
+        res.status(500).json({
+            message: 'Error fetching artisans',
             error: err.message,
         });
     }

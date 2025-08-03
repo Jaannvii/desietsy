@@ -1,4 +1,5 @@
 import Product from '../models/Product.model.js';
+import Artisan from '../models/Artisan.model.js';
 
 const createProduct = async (req, res) => {
     try {
@@ -6,9 +7,28 @@ const createProduct = async (req, res) => {
             req.body;
         const artisanId = req.user._id;
 
-        if (!artisanId) {
+        const artisan = await Artisan.findOne({ userId: artisanId });
+        if (!artisan) {
             return res.status(400).json({
-                message: 'Artisan ID is required',
+                message: 'Artisan not found',
+            });
+        }
+
+        if (
+            !artisan.shopName ||
+            !artisan.bio ||
+            !artisan.contactNumber ||
+            !artisan.address
+        ) {
+            return res.status(400).json({
+                message:
+                    'Artisan profile is incomplete. Please update your profile before adding products.',
+            });
+        }
+
+        if (!artisan.isVerified) {
+            return res.status(403).json({
+                message: 'Artisan is not verified. Cannot add products.',
             });
         }
 
@@ -46,7 +66,7 @@ const createProduct = async (req, res) => {
         }
 
         const product = await Product.create({
-            artisanId,
+            artisanId: artisan._id,
             name,
             description,
             price,

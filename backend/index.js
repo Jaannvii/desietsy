@@ -5,6 +5,7 @@ import db from './config/db.js';
 import cookieParser from 'cookie-parser';
 
 import userRouter from './routes/auth.route.js';
+import artisanRouter from './routes/artisan.route.js';
 import productRouter from './routes/product.route.js';
 import orderRouter from './routes/order.route.js';
 import adminRouter from './routes/admin.route.js';
@@ -32,6 +33,7 @@ app.use(cookieParser());
 db();
 
 app.use('/api/desietsy/auth', userRouter);
+app.use('/api/desietsy/artisan', artisanRouter);
 app.use('/api/desietsy/product', productRouter);
 app.use('/api/desietsy/order', orderRouter);
 app.use('/api/desietsy/admin', adminRouter);
