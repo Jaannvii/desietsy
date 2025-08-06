@@ -77,14 +77,14 @@ const registerUser = async (req, res) => {
             subject: 'Verify your email',
             text:
                 'Please verify your email by clicking the link below:\n\n' +
-                `${process.env.BASE_URL}/api/desietsy/verify-email/${token}`,
+                `${process.env.FRONTEND_URL}/auth/verify-email/${token}`,
         };
 
         await transport.sendMail(mailOptions);
 
         return res
             .status(201)
-            .json({ message: `${username} registered successfully` });
+            .json({ message: `${username} registered successfully`, token });
     } catch (err) {
         return res
             .status(400)
@@ -100,6 +100,17 @@ const verifyUser = async (req, res) => {
 
     const user = await User.findOne({ verificationToken: token });
     if (!user) {
+        return res.status(400).json({ message: 'Invalid token' });
+    }
+
+    if (!user) {
+        const verifiedUser = await User.findOne({
+            isVerified: true,
+            verificationToken: undefined,
+        });
+        if (verifiedUser) {
+            return res.status(200).json({ message: 'Email already verified' });
+        }
         return res.status(400).json({ message: 'Invalid token' });
     }
 
@@ -139,7 +150,10 @@ const loginUser = async (req, res) => {
         }
 
         if (!user.isVerified) {
-            return res.status(400).json({ message: 'Email not verified' });
+            return res.status(400).json({
+                message: 'Email not verified',
+                token: user.verificationToken,
+            });
         }
 
         const token = jwt.sign(

@@ -1,0 +1,37 @@
+.auth-bg {
+    background: linear-gradient(to right, #dce7f5, #b4ccee);
+    color: #ffffff;
+}
+
+.auth-card {
+    background: rgb(240, 251, 255);
+    padding: 30px;
+    border-radius: 10px;
+}
+
+.auth-title {
+    font-weight: bold;
+    color: #0f0565;
+}
+
+.custom-link {
+    color: #7c7b86;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.custom-link:hover {
+    color: #0c044d;
+    text-decoration: none;
+}
+
+.verify-link {
+    color: #1e00ff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.verify-link:hover {
+    color: #0c044d;
+    text-decoration: none;
+}
