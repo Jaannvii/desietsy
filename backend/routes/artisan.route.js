@@ -3,6 +3,6 @@ import { updateProfile } from '../controllers/artisan.controller.js';
 import { isLoggedIn, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
-router.put('/profile/:id', isLoggedIn, authorize('Artisan'), updateProfile);
+router.put('/profile', isLoggedIn, authorize('Artisan'), updateProfile);
 
 export default router;

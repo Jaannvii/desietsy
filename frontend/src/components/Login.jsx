@@ -21,8 +21,13 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await login(formData);
+
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+
             setMessage(res.data.message);
             setSuccess(true);
+
             setTimeout(() => navigate('/'), 5000);
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Login failed';

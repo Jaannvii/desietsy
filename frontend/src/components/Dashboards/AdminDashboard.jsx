@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import '../../styles/home.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -75,73 +76,148 @@ const AdminDashboard = () => {
     }, []);
 
     return (
-        <div>
-            <h1>Admin Dashboard</h1>
+        <div className="py-4 bgColor">
+            <h1 className="mb-4 text-center title">Admin Dashboard</h1>
 
-            <section>
-                <h2>Artisans</h2>
-                <ul>
-                    {artisans.map((artisan) => (
-                        <li key={artisan._id}>
-                            {artisan.shopName || 'No shop name'} - Verified:{' '}
-                            {artisan.isVerified ? '✅' : '❌'}
-                            {!artisan.isVerified && (
-                                <button
-                                    onClick={() => verifyArtisan(artisan._id)}
-                                >
-                                    Verify
-                                </button>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+            <section className="container mb-5">
+                <h4 className="mb-3 title">Artisans</h4>
+                <div className="table-responsive">
+                    <table className="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th className="text-center py-2">Shop Name</th>
+                                <th className="text-center py-2">Verified</th>
+                                <th className="text-center py-2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {artisans.map((artisan) => (
+                                <tr key={artisan._id}>
+                                    <td>
+                                        {artisan.shopName || 'No shop name'}
+                                    </td>
+                                    <td>{artisan.isVerified ? '✅' : '❌'}</td>
+                                    <td>
+                                        {!artisan.isVerified && (
+                                            <button
+                                                className="btn btn-sm btn-success"
+                                                onClick={() =>
+                                                    verifyArtisan(artisan._id)
+                                                }
+                                            >
+                                                Verify
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
-            <section>
-                <h2>Products</h2>
-                <ul>
-                    {products.map((product) => (
-                        <li key={product._id}>
-                            {product.name} - Approved:{' '}
-                            {product.isApproved ? '✅' : '❌'}
-                            <button onClick={() => deleteProduct(product._id)}>
-                                Delete
-                            </button>
-                            {!product.isApproved && (
-                                <button
-                                    onClick={() => approveProduct(product._id)}
-                                >
-                                    Approve
-                                </button>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+            <section className="container mb-5">
+                <h4 className="mb-3 title">Products</h4>
+                <div className="table-responsive">
+                    <table className="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th className="text-center py-2">Name</th>
+                                <th className="text-center py-2">Approved</th>
+                                <th className="text-center py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products.map((product) => (
+                                <tr key={product._id}>
+                                    <td>{product.name}</td>
+                                    <td>{product.isApproved ? '✅' : '❌'}</td>
+                                    <td>
+                                        <button
+                                            className="btn btn-sm btn-danger me-2"
+                                            onClick={() =>
+                                                deleteProduct(product._id)
+                                            }
+                                        >
+                                            Delete
+                                        </button>
+                                        {!product.isApproved && (
+                                            <button
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() =>
+                                                    approveProduct(product._id)
+                                                }
+                                            >
+                                                Approve
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
-            <section>
-                <h2>Orders</h2>
-                <ul>
-                    {orders.map((order) => (
-                        <li key={order._id}>
-                            Order #{order._id} - Status: {order.status}
-                            <select
-                                value={order.status}
-                                onChange={(e) =>
-                                    updateOrderStatus(order._id, e.target.value)
-                                }
-                            >
-                                <option value="Pending">Pending</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                            <button onClick={() => deleteOrder(order._id)}>
-                                Delete
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+            <section className="container">
+                <h4 className="mb-3 title">Orders</h4>
+                <div className="table-responsive">
+                    <table className="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th className="text-center py-2">Order ID</th>
+                                <th className="text-center py-2">Status</th>
+                                <th className="text-center py-2">
+                                    Change Status
+                                </th>
+                                <th className="text-center py-2">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {orders.map((order) => (
+                                <tr key={order._id}>
+                                    <td>{order._id}</td>
+                                    <td>{order.status}</td>
+                                    <td>
+                                        <select
+                                            className="form-select form-select-sm"
+                                            value={order.status}
+                                            onChange={(e) =>
+                                                updateOrderStatus(
+                                                    order._id,
+                                                    e.target.value
+                                                )
+                                            }
+                                        >
+                                            <option value="Pending">
+                                                Pending
+                                            </option>
+                                            <option value="Shipped">
+                                                Shipped
+                                            </option>
+                                            <option value="Delivered">
+                                                Delivered
+                                            </option>
+                                            <option value="Cancelled">
+                                                Cancelled
+                                            </option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() =>
+                                                deleteOrder(order._id)
+                                            }
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </div>
     );

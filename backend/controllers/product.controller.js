@@ -1,13 +1,21 @@
 import Product from '../models/Product.model.js';
 import Artisan from '../models/Artisan.model.js';
+import Category from '../models/Category.model.js';
 
 const createProduct = async (req, res) => {
     try {
-        const { name, description, price, category, image, stock, discount } =
-            req.body;
-        const artisanId = req.user._id;
+        const {
+            name,
+            description,
+            price,
+            categoryName,
+            categoryImage,
+            image,
+            stock,
+            discount,
+        } = req.body;
 
-        const artisan = await Artisan.findOne({ userId: artisanId });
+        const artisan = await Artisan.findOne({ userId: req.user._id });
         if (!artisan) {
             return res.status(400).json({
                 message: 'Artisan not found',
@@ -32,7 +40,7 @@ const createProduct = async (req, res) => {
             });
         }
 
-        if (!name || !description || !price || !category || !image) {
+        if (!name || !description || !price || !categoryName || !image) {
             return res.status(400).json({
                 message: 'All fields are required',
             });
@@ -44,13 +52,16 @@ const createProduct = async (req, res) => {
             });
         }
 
-        if (typeof stock !== 'number' || stock < 0) {
+        if (stock !== undefined && (typeof stock !== 'number' || stock < 0)) {
             return res.status(400).json({
                 message: 'Stock must be a non-negative number',
             });
         }
 
-        if (typeof discount !== 'number' || discount < 0) {
+        if (
+            discount !== undefined &&
+            (typeof discount !== 'number' || discount < 0)
+        ) {
             return res.status(400).json({
                 message: 'Discount must be a non-negative number',
             });
@@ -65,21 +76,43 @@ const createProduct = async (req, res) => {
             });
         }
 
+        let category = await Category.findOne({
+            categoryName: categoryName.trim(),
+        });
+        if (!category) {
+            if (
+                !categoryImage ||
+                !categoryImage.startsWith('http') ||
+                (!categoryImage.endsWith('.jpg') &&
+                    !categoryImage.endsWith('.png'))
+            ) {
+                return res.status(400).json({
+                    message:
+                        'New category must include a valid category image URL.',
+                });
+            }
+            category = await Category.create({
+                categoryName: categoryName.trim(),
+                categoryImage,
+            });
+        }
+
         const product = await Product.create({
             artisanId: artisan._id,
             name,
             description,
             price,
-            category,
+            category: category._id,
             image,
-            stock,
-            discount,
+            stock: stock || 0,
+            discount: discount || 0,
         });
 
         await product.save();
 
         return res.status(200).json({
             message: 'Product created successfully',
+            product,
         });
     } catch (err) {
         return res.status(500).json({
@@ -89,9 +122,46 @@ const createProduct = async (req, res) => {
     }
 };
 
+const getCategories = async (req, res) => {
+    try {
+        const categoriesWithProducts = await Category.aggregate([
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: 'category',
+                    as: 'products',
+                },
+            },
+            {
+                $match: {
+                    'products.0': { $exists: true },
+                },
+            },
+            {
+                $project: {
+                    categoryName: 1,
+                    categoryImage: 1,
+                },
+            },
+        ]);
+
+        res.status(200).json(categoriesWithProducts);
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Error fetching categories',
+            error: err.message,
+        });
+    }
+};
+
 const getProducts = async (req, res) => {
     try {
-        const products = await Product.find();
+        const filter = {};
+        if (req.query.category) {
+            filter.category = req.query.category;
+        }
+        const products = await Product.find(filter).populate('category');
         return res.status(200).json(products);
     } catch (err) {
         return res.status(500).json({
@@ -172,6 +242,7 @@ const deleteProduct = async (req, res) => {
 
 export {
     createProduct,
+    getCategories,
     getProducts,
     getProductById,
     updateProduct,

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import User from '../models/User.model.js';
 import Artisan from '../models/Artisan.model.js';
 import crypto from 'crypto';
@@ -82,9 +83,10 @@ const registerUser = async (req, res) => {
 
         await transport.sendMail(mailOptions);
 
-        return res
-            .status(201)
-            .json({ message: `${username} registered successfully`, token });
+        return res.status(201).json({
+            message: `${username} registered successfully`,
+            token,
+        });
     } catch (err) {
         return res
             .status(400)
@@ -166,7 +168,7 @@ const loginUser = async (req, res) => {
 
         const cookieOptions = {
             httpOnly: true,
-            secure: true,
+            secure: false,
             maxAge: 24 * 60 * 60 * 1000,
         };
         res.cookie('token', token, cookieOptions);
@@ -297,6 +299,25 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const getUserRole = async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid user ID format' });
+        }
+        const user = await User.findById(id).select('role');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json({ role: user.role });
+    } catch (err) {
+        return res
+            .status(500)
+            .json({ message: 'Error fetching user role', error: err.message });
+    }
+};
+
 export {
     registerUser,
     verifyUser,
@@ -305,4 +326,5 @@ export {
     logoutUser,
     forgotPassword,
     resetPassword,
+    getUserRole,
 };
