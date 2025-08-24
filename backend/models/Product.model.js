@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
     },
     artisanId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Artisan',
         required: true,
     },
     stock: {

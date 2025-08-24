@@ -11,6 +11,9 @@ import ResetPassword from '../components/ResetPassword.jsx';
 import VerifyEmail from '../components/VerifyEmail.jsx';
 import MainPage from '../components/Home.jsx';
 import Products from '../components/Products.jsx';
+import Cart from '../components/Cart.jsx';
+import Checkout from '../components/Checkout.jsx';
+import Payment from '../components/Payment.jsx';
 
 const AppRoutes = () => {
     return (
@@ -26,12 +29,44 @@ const AppRoutes = () => {
             />
             <Route path="/auth/verify-email/:token" element={<VerifyEmail />} />
 
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route
+                path="/admin/dashboard"
+                element={
+                    <ProtectedRoute role="Admin">
+                        <AdminDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-            <Route path="/artisan/dashboard" element={<ArtisanDashboard />} />
+            <Route
+                path="/artisan/dashboard"
+                element={
+                    <ProtectedRoute role="Artisan">
+                        <ArtisanDashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-            <Route path="/order/tracking" element={<OrderTracking />} />
-            <Route path="/past-history" element={<PastHistory />} />
+            <Route
+                path="/order/tracking"
+                element={
+                    <ProtectedRoute role="User">
+                        <OrderTracking />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/past-history"
+                element={
+                    <ProtectedRoute role="User">
+                        <PastHistory />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/payment" element={<Payment />} />
         </Routes>
     );
 };

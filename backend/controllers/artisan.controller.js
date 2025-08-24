@@ -1,5 +1,28 @@
 import Artisan from '../models/Artisan.model.js';
 
+const getProfile = async (req, res) => {
+    try {
+        const artisan = await Artisan.findOne({ userId: req.user._id });
+        if (!artisan) {
+            return res.status(404).json({ message: 'Artisan not found' });
+        }
+
+        return res.status(200).json({
+            _id: artisan._id,
+            shopName: artisan.shopName,
+            bio: artisan.bio,
+            contactNumber: artisan.contactNumber,
+            address: artisan.address,
+            isVerified: artisan.isVerified,
+        });
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Error fetching profile',
+            error: err.message,
+        });
+    }
+};
+
 const updateProfile = async (req, res) => {
     try {
         const artisan = await Artisan.findOne({ userId: req.user._id });
@@ -33,4 +56,4 @@ const updateProfile = async (req, res) => {
     }
 };
 
-export { updateProfile };
+export { getProfile, updateProfile };

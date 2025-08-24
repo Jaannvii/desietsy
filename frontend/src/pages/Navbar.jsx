@@ -128,7 +128,7 @@ const Navbar = () => {
                                     className="dropdown-menu dropdown-menu-end"
                                     aria-labelledby="profileDropdown"
                                 >
-                                    {user.role === 'User' && (
+                                    {user?.role === 'User' && (
                                         <>
                                             <li>
                                                 <Link
@@ -148,7 +148,7 @@ const Navbar = () => {
                                             </li>
                                         </>
                                     )}
-                                    {user.role === 'Artisan' && (
+                                    {user?.role === 'Artisan' && (
                                         <>
                                             <li>
                                                 <Link
@@ -160,7 +160,7 @@ const Navbar = () => {
                                             </li>
                                         </>
                                     )}
-                                    {user.role === 'Admin' && (
+                                    {user?.role === 'Admin' && (
                                         <>
                                             <li>
                                                 <Link

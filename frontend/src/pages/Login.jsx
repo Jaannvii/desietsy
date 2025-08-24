@@ -28,13 +28,13 @@ const Login = () => {
             setMessage(res.data.message);
             setSuccess(true);
 
-            setTimeout(() => navigate('/'), 5000);
+            setTimeout(() => navigate('/'), 3000);
         } catch (err) {
             const errorMsg = err.response?.data?.message || 'Login failed';
             setSuccess(false);
             if (errorMsg === 'Email not verified') {
                 setMessage(
-                    'Your email is not verified. Please check your email.'
+                    'Your email is not verified. Please check your mail.'
                 );
             } else {
                 setMessage(errorMsg);

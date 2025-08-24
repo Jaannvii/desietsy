@@ -95,6 +95,7 @@ const createProduct = async (req, res) => {
                 categoryName: categoryName.trim(),
                 categoryImage,
             });
+            await category.save();
         }
 
         const product = await Product.create({
@@ -113,6 +114,7 @@ const createProduct = async (req, res) => {
         return res.status(200).json({
             message: 'Product created successfully',
             product,
+            category,
         });
     } catch (err) {
         return res.status(500).json({
@@ -142,6 +144,7 @@ const getCategories = async (req, res) => {
                 $project: {
                     categoryName: 1,
                     categoryImage: 1,
+                    productsCount: { $size: '$products' },
                 },
             },
         ]);

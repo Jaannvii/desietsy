@@ -12,6 +12,7 @@ const Register = () => {
     });
     const [message, setMessage] = useState('');
     const [showCheckEmail, setShowCheckEmail] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const handleChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,15 +21,17 @@ const Register = () => {
         e.preventDefault();
         try {
             const res = await register(formData);
-            console.log(Response, res);
-            if (res.data.success) {
+            console.log('Response:', res);
+            if (res.data.message && res.data) {
                 setMessage(res.data.message);
                 setShowCheckEmail(true);
+                setSuccess(true);
             }
         } catch (err) {
             console.error('Registration error:', err);
             setMessage(err.response?.data?.message || 'Registration failed');
             setShowCheckEmail(false);
+            setSuccess(false);
         }
     };
 

@@ -20,6 +20,6 @@ router.get('/me', isLoggedIn, getMe);
 router.get('/logout', isLoggedIn, logoutUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
-router.get('/role/:id', getUserRole);
+router.get('/role/:id', isLoggedIn, getUserRole);
 
 export default router;

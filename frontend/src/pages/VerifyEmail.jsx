@@ -24,7 +24,7 @@ const VerifyEmail = () => {
                     setMessage(msg);
                     setSuccess(true);
                 }
-                setTimeout(() => navigate('/auth/login'), 5000);
+                setTimeout(() => navigate('/auth/login'), 3000);
             } catch (err) {
                 setMessage(
                     err.response?.data?.message || 'Email verification failed'
@@ -41,7 +41,7 @@ const VerifyEmail = () => {
                 className="card shadow auth-card"
                 style={{ width: '100%', maxWidth: '400px' }}
             >
-                <h2 className="text-center mb-5 auth-title">
+                <h2 className="text-center mb-3 auth-title">
                     Email Verification
                 </h2>
                 {message && (

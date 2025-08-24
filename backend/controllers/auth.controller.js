@@ -63,25 +63,32 @@ const registerUser = async (req, res) => {
         user.verificationToken = token;
         await user.save();
 
-        var transport = nodemailer.createTransport({
-            host: 'sandbox.smtp.mailtrap.io',
-            port: 2525,
-            auth: {
-                user: process.env.MAILTRAP_USER,
-                pass: process.env.MAILTRAP_PASS,
-            },
-        });
+        try {
+            var transport = nodemailer.createTransport({
+                host: 'sandbox.smtp.mailtrap.io',
+                port: 2525,
+                auth: {
+                    user: process.env.MAILTRAP_USER,
+                    pass: process.env.MAILTRAP_PASS,
+                },
+            });
 
-        const mailOptions = {
-            from: `"${process.env.MAILTRAP_SENDERNAME}" <${process.env.MAILTRAP_SENDEREMAIL}>`,
-            to: user.email,
-            subject: 'Verify your email',
-            text:
-                'Please verify your email by clicking the link below:\n\n' +
-                `${process.env.FRONTEND_URL}/auth/verify-email/${token}`,
-        };
+            const mailOptions = {
+                from: `"${process.env.MAILTRAP_SENDERNAME}" <${process.env.MAILTRAP_SENDEREMAIL}>`,
+                to: user.email,
+                subject: 'Verify your email',
+                text:
+                    'Please verify your email by clicking the link below:\n\n' +
+                    `${process.env.FRONTEND_URL}/auth/verify-email/${token}`,
+            };
 
-        await transport.sendMail(mailOptions);
+            await transport.sendMail(mailOptions);
+        } catch (err) {
+            return res.status(500).json({
+                message: 'Error sending verification email',
+                error: err.message,
+            });
+        }
 
         return res.status(201).json({
             message: `${username} registered successfully`,
@@ -130,6 +137,7 @@ const verifyUser = async (req, res) => {
         user: {
             id: user._id,
             username: user.username,
+            role: user.role,
         },
     });
 };
@@ -141,7 +149,7 @@ const loginUser = async (req, res) => {
     }
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).select('+password');
         if (!user) {
             return res.status(400).json({ message: 'User not found' });
         }
@@ -169,6 +177,7 @@ const loginUser = async (req, res) => {
         const cookieOptions = {
             httpOnly: true,
             secure: false,
+            sameSite: 'lax',
             maxAge: 24 * 60 * 60 * 1000,
         };
         res.cookie('token', token, cookieOptions);
@@ -179,6 +188,7 @@ const loginUser = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
+                role: user.role,
             },
         });
     } catch (err) {
@@ -190,22 +200,21 @@ const loginUser = async (req, res) => {
 
 const getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        if (!req.user) {
+            return res.status(401).json({ message: 'Not Authenticated' });
         }
 
         return res.status(200).json({
             user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
+                id: req.user._id,
+                username: req.user.username,
+                email: req.user.email,
+                role: req.user.role,
             },
         });
     } catch (err) {
         return res
-            .status(400)
+            .status(500)
             .json({ message: 'Error fetching user data', error: err.message });
     }
 };

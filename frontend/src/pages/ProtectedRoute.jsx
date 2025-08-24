@@ -10,19 +10,24 @@ const ProtectedRoute = ({ children, role }) => {
         const fetchUser = async () => {
             try {
                 const res = await getMe();
-                setUser(res.data.user);
+                console.log('getMe response:', res.data);
+                setUser(res?.data?.user || null);
             } catch (err) {
+                console.error(
+                    'Error in getMe:',
+                    err.response?.data || err.message
+                );
                 setUser(null);
             } finally {
                 setLoading(false);
             }
         };
-        fetchUser();
+        setTimeout(fetchUser, 100);
     }, []);
 
     if (loading) return <p>Loading...</p>;
-    if (!user) return <Navigate to="/login" />;
-    if (role && user.role !== role) return <Navigate to="/" />;
+    if (!user) return <Navigate to="/auth/login" replace />;
+    if (role && user.role !== role) return <Navigate to="/" replace />;
 
     return children;
 };
