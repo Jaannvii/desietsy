@@ -1,4 +1,5 @@
 import Artisan from '../models/Artisan.model.js';
+import User from '../models/User.model.js';
 
 const getProfile = async (req, res) => {
     try {
@@ -56,4 +57,23 @@ const updateProfile = async (req, res) => {
     }
 };
 
-export { getProfile, updateProfile };
+const deleteArtisan = async (req, res) => {
+    try {
+        const artisan = await Artisan.findById(req.params.id);
+        if (!artisan) {
+            return res.status(400).json({ message: 'Artisan not found' });
+        }
+        await Artisan.findByIdAndDelete(req.params.id);
+        await User.findByIdAndDelete(artisan.userId);
+        return res
+            .status(200)
+            .json({ message: 'Artisan deleted successfully' });
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Error deleting artisan',
+            error: err.message,
+        });
+    }
+};
+
+export { getProfile, updateProfile, deleteArtisan };

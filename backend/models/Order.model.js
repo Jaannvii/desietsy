@@ -48,7 +48,7 @@ const orderSchema = new mongoose.Schema(
         },
         paymentMethod: {
             type: String,
-            enum: ['Credit Card', 'PayPal', 'Cash on Delivery'],
+            enum: ['Credit Card', 'PayPal', 'Cash on Delivery', 'Razorpay'],
             required: true,
         },
         paymentStatus: {
@@ -58,7 +58,14 @@ const orderSchema = new mongoose.Schema(
         },
         orderStatus: {
             type: String,
-            enum: ['Pending', 'Shipped', 'Delivered', 'Cancelled'],
+            enum: [
+                'Pending',
+                'Confirmed',
+                'Shipped',
+                'Out for Delivery',
+                'Delivered',
+                'Cancelled',
+            ],
             default: 'Pending',
         },
         createdAt: {

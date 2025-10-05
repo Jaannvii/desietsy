@@ -15,6 +15,11 @@ router.get('/categories', getCategories);
 router.get('/', getProducts);
 router.get('/:id', getProductById);
 router.put('/:id', isLoggedIn, authorize('Artisan'), updateProduct);
-router.delete('/:id', isLoggedIn, authorize('Admin', 'Artisan'), deleteProduct);
+router.delete(
+    '/delete/:id',
+    isLoggedIn,
+    authorize('Admin', 'Artisan'),
+    deleteProduct
+);
 
 export default router;

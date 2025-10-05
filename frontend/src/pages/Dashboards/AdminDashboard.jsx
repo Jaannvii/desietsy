@@ -25,6 +25,24 @@ const AdminDashboard = () => {
         fetchArtisans();
     };
 
+    const deleteArtisan = async (id) => {
+        if (
+            !window.confirm(
+                'Delete this artisan? This action cannot be undone.'
+            )
+        )
+            return;
+        try {
+            await axios.delete(`${API_URL}/artisan/delete/${id}`, {
+                withCredentials: true,
+            });
+
+            setArtisans((prev) => prev.filter((a) => a._id !== id));
+        } catch (err) {
+            console.error('Error deleting artisan:', err);
+        }
+    };
+
     const fetchProducts = async () => {
         const res = await axios.get(`${API_URL}/admin/products`, {
             withCredentials: true,
@@ -42,7 +60,8 @@ const AdminDashboard = () => {
     };
 
     const deleteProduct = async (id) => {
-        await axios.delete(`${API_URL}/product/${id}`, {
+        if (!window.confirm('Delete this product?')) return;
+        await axios.delete(`${API_URL}/product/delete/${id}`, {
             withCredentials: true,
         });
         fetchProducts();
@@ -56,15 +75,24 @@ const AdminDashboard = () => {
     };
 
     const updateOrderStatus = async (id, status) => {
-        await axios.put(
-            `${API_URL}/order/${id}/status`,
-            { status },
-            { withCredentials: true }
-        );
-        fetchOrders();
+        try {
+            await axios.put(
+                `${API_URL}/order/${id}/status`,
+                { orderStatus: status },
+                { withCredentials: true }
+            );
+            setOrders((prev) =>
+                prev.map((order) =>
+                    order._id === id ? { ...order, orderStatus: status } : order
+                )
+            );
+        } catch (err) {
+            console.error('Error updating order status:', err);
+        }
     };
 
     const deleteOrder = async (id) => {
+        if (!window.confirm('Delete this order?')) return;
         await axios.delete(`${API_URL}/order/${id}`, { withCredentials: true });
         fetchOrders();
     };
@@ -87,20 +115,22 @@ const AdminDashboard = () => {
                             <tr>
                                 <th className="text-center py-2">Shop Name</th>
                                 <th className="text-center py-2">Verified</th>
-                                <th className="text-center py-2">Action</th>
+                                <th className="text-center py-2">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {artisans.map((artisan) => (
                                 <tr key={artisan._id}>
-                                    <td>
+                                    <td className="text-center">
                                         {artisan.shopName || 'No shop name'}
                                     </td>
-                                    <td>{artisan.isVerified ? '✅' : '❌'}</td>
-                                    <td>
+                                    <td className="text-center">
+                                        {artisan.isVerified ? '✅' : '❌'}
+                                    </td>
+                                    <td className="text-center">
                                         {!artisan.isVerified && (
                                             <button
-                                                className="btn btn-sm btn-success"
+                                                className="btn btn-sm btn-success me-2"
                                                 onClick={() =>
                                                     verifyArtisan(artisan._id)
                                                 }
@@ -108,6 +138,14 @@ const AdminDashboard = () => {
                                                 Verify
                                             </button>
                                         )}
+                                        <button
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() =>
+                                                deleteArtisan(artisan._id)
+                                            }
+                                        >
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -122,7 +160,9 @@ const AdminDashboard = () => {
                     <table className="table table-striped table-hover align-middle">
                         <thead>
                             <tr>
-                                <th className="text-center py-2">Name</th>
+                                <th className="text-center py-2">
+                                    Product Name
+                                </th>
                                 <th className="text-center py-2">Approved</th>
                                 <th className="text-center py-2">Actions</th>
                             </tr>
@@ -130,20 +170,16 @@ const AdminDashboard = () => {
                         <tbody>
                             {products.map((product) => (
                                 <tr key={product._id}>
-                                    <td>{product.name}</td>
-                                    <td>{product.isApproved ? '✅' : '❌'}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-danger me-2"
-                                            onClick={() =>
-                                                deleteProduct(product._id)
-                                            }
-                                        >
-                                            Delete
-                                        </button>
+                                    <td className="text-center">
+                                        {product.name}
+                                    </td>
+                                    <td className="text-center">
+                                        {product.isApproved ? '✅' : '❌'}
+                                    </td>
+                                    <td className="text-center">
                                         {!product.isApproved && (
                                             <button
-                                                className="btn btn-sm btn-primary"
+                                                className="btn btn-sm btn-primary me-2"
                                                 onClick={() =>
                                                     approveProduct(product._id)
                                                 }
@@ -151,6 +187,14 @@ const AdminDashboard = () => {
                                                 Approve
                                             </button>
                                         )}
+                                        <button
+                                            className="btn btn-sm btn-danger"
+                                            onClick={() =>
+                                                deleteProduct(product._id)
+                                            }
+                                        >
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -166,6 +210,7 @@ const AdminDashboard = () => {
                         <thead>
                             <tr>
                                 <th className="text-center py-2">Order ID</th>
+                                <th className="text-center py-2">Item</th>
                                 <th className="text-center py-2">Status</th>
                                 <th className="text-center py-2">
                                     Change Status
@@ -174,47 +219,88 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {orders.map((order) => (
-                                <tr key={order._id}>
-                                    <td>{order._id}</td>
-                                    <td>{order.status}</td>
-                                    <td>
-                                        <select
-                                            className="form-select form-select-sm"
-                                            value={order.status}
-                                            onChange={(e) =>
-                                                updateOrderStatus(
-                                                    order._id,
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-                                            <option value="Pending">
-                                                Pending
-                                            </option>
-                                            <option value="Shipped">
-                                                Shipped
-                                            </option>
-                                            <option value="Delivered">
-                                                Delivered
-                                            </option>
-                                            <option value="Cancelled">
-                                                Cancelled
-                                            </option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <button
-                                            className="btn btn-sm btn-danger"
-                                            onClick={() =>
-                                                deleteOrder(order._id)
-                                            }
-                                        >
-                                            Delete
-                                        </button>
+                            {orders.length > 0 ? (
+                                orders.map((order) => (
+                                    <tr key={order._id}>
+                                        <td className="text-center">
+                                            {order._id}
+                                        </td>
+                                        <td className="text-center">
+                                            {order.products &&
+                                            order.products.length > 0
+                                                ? order.products.map((item) => (
+                                                      <div
+                                                          key={
+                                                              item._id ||
+                                                              item.productId
+                                                                  ?._id
+                                                          }
+                                                      >
+                                                          {item.productId?.name}{' '}
+                                                          × {item.quantity}
+                                                      </div>
+                                                  ))
+                                                : '—'}
+                                        </td>
+                                        <td className="text-center">
+                                            {order.orderStatus}
+                                        </td>
+                                        <td className="text-center">
+                                            <select
+                                                className="form-select form-select-sm"
+                                                value={order.orderStatus}
+                                                disabled={
+                                                    order.orderStatus ===
+                                                        'Delivered' ||
+                                                    order.orderStatus ===
+                                                        'Cancelled'
+                                                }
+                                                onChange={(e) =>
+                                                    updateOrderStatus(
+                                                        order._id,
+                                                        e.target.value
+                                                    )
+                                                }
+                                            >
+                                                <option value="Pending">
+                                                    Pending
+                                                </option>
+                                                <option value="Confirmed">
+                                                    Confirmed
+                                                </option>
+                                                <option value="Shipped">
+                                                    Shipped
+                                                </option>
+                                                <option value="Out for Delivery">
+                                                    Out for Delivery
+                                                </option>
+                                                <option value="Delivered">
+                                                    Delivered
+                                                </option>
+                                                <option value="Cancelled">
+                                                    Cancelled
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td className="text-center">
+                                            <button
+                                                className="btn btn-sm btn-danger"
+                                                onClick={() =>
+                                                    deleteOrder(order._id)
+                                                }
+                                            >
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" className="text-muted">
+                                        No orders found.
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

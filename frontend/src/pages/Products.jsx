@@ -1,145 +1,150 @@
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import '../styles/products.css';
+import { useLocation, useNavigate } from 'react-router-dom';
+import '../styles/home.css';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const navigate = useNavigate();
-    const location = useLocation();
+    const [filteredProducts, setFilteredProducts] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [message, setMessage] = useState('');
+    const [success, setSuccess] = useState(false);
 
+    const location = useLocation();
+    const navigate = useNavigate();
     const API_URL = import.meta.env.VITE_API_URL;
+    const isLoggedIn = !!localStorage.getItem('token');
 
     useEffect(() => {
-        const fetchCategories = async () => {
+        const fetchProducts = async () => {
             try {
-                const res = await axios.get(`${API_URL}/product/categories`);
-                setCategories(res.data || []);
-            } catch (error) {
-                console.error('Error fetching categories:', error);
+                const res = await axios.get(`${API_URL}/product/`);
+                setProducts(res.data || []);
+            } catch (err) {
+                console.error('Error fetching products:', err);
             }
         };
-        fetchCategories();
+        fetchProducts();
     }, [API_URL]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const categoryParam = params.get('category');
-        setSelectedCategory(categoryParam || '');
 
-        const fetchProducts = async () => {
-            try {
-                const endpoint = categoryParam
-                    ? `${API_URL}/product?category=${categoryParam}`
-                    : `${API_URL}/product`;
+        if (!categoryParam || categoryParam === 'All') {
+            setSelectedCategory('All');
+            setFilteredProducts(products);
+        } else {
+            setSelectedCategory(categoryParam);
+            const filtered = products.filter(
+                (p) =>
+                    p.category &&
+                    p.category.categoryName.toLowerCase() ===
+                        categoryParam.toLowerCase()
+            );
+            setFilteredProducts(filtered);
+        }
+    }, [products, location.search]);
 
-                const response = await axios.get(endpoint);
-                setProducts(response.data.products || []);
-            } catch (error) {
-                console.error('Error fetching products:', error);
-            }
-        };
-
-        fetchProducts();
-    }, [location.search, API_URL]);
-
-    const handleClearFilter = () => {
-        navigate('/products');
+    const handleAddToCart = (product) => {
+        if (isLoggedIn) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            cart.push(product);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            setMessage(`${product.name} added to cart ✅`);
+            setSuccess(true);
+            setTimeout(() => navigate('/cart'), 3000);
+        } else {
+            setMessage(
+                'Please register to add items to your cart. Redirecting to the registration page...'
+            );
+            setSuccess(false);
+            setTimeout(() => navigate('/auth/register'), 3000);
+        }
     };
 
     return (
-        <div className="products-page container py-5">
-            <h2 className="mb-4 text-center title">
-                {selectedCategory
-                    ? `${
-                          categories.find((c) => c._id === selectedCategory)
-                              ?.categoryName || ''
-                      } Products`
-                    : 'All Products'}
-            </h2>
-
-            {selectedCategory && (
-                <div className="text-center mb-4">
-                    <button
-                        className="btn btn-outline-secondary"
-                        onClick={handleClearFilter}
+        <div className="bgColor">
+            <h1 className="text-center py-4 title">
+                {selectedCategory === 'All'
+                    ? 'All Products'
+                    : `${selectedCategory} Category`}
+            </h1>
+            <div className="container">
+                {message && (
+                    <p
+                        className={`text-center ${
+                            success ? 'text-success' : 'text-danger'
+                        }`}
                     >
-                        ← View All Products
-                    </button>
-                </div>
-            )}
+                        {message}
+                    </p>
+                )}
 
-            <div className="row mb-4">
-                <div className="col-md-4 offset-md-4">
-                    <select
-                        className="form-select"
-                        value={selectedCategory || ''}
-                        onChange={(e) =>
-                            navigate(
-                                e.target.value
-                                    ? `/products?category=${e.target.value}`
-                                    : '/products'
-                            )
-                        }
-                    >
-                        <option value="">All Categories</option>
-                        {categories.map((cat) => (
-                            <option key={cat._id} value={cat._id}>
-                                {cat.categoryName}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            <div className="row">
-                {products.length > 0 ? (
-                    products.map((product) => (
-                        <div
-                            className="col-md-4 col-sm-6 mb-4"
-                            key={product._id}
-                        >
-                            <div className="card h-100 shadow-sm">
-                                <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="card-img-top"
-                                    style={{
-                                        height: '200px',
-                                        objectFit: 'cover',
-                                    }}
-                                />
-                                <div className="card-body d-flex flex-column justify-content-between">
-                                    <h5 className="card-title">
-                                        {product.name}
-                                    </h5>
-                                    <p className="card-text">
-                                        {product.description}
-                                    </p>
-                                    <p className="fw-bold mb-2">
-                                        ₹{product.price}
-                                    </p>
-                                    {product.discount > 0 && (
-                                        <p className="text-success">
-                                            Discount: {product.discount}%
+                <div className="row">
+                    {filteredProducts.length > 0 ? (
+                        filteredProducts.map((product) => (
+                            <div className="col-md-4 mb-4" key={product._id}>
+                                <div className="card shadow h-100">
+                                    <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="card-img-top"
+                                        style={{
+                                            height: '250px',
+                                            objectFit: 'cover',
+                                        }}
+                                    />
+                                    <div className="card-body">
+                                        <h5 className="card-title">
+                                            {product.name}
+                                        </h5>
+                                        <p className="card-text">
+                                            {product.description}
                                         </p>
-                                    )}
-                                    <button className="btn btn-primary mt-auto">
-                                        Add to Cart
-                                    </button>
+                                        <p className="fw-bold">
+                                            {product.discount > 0 ? (
+                                                <>
+                                                    <span className="text-muted text-decoration-line-through">
+                                                        ₹{product.price}
+                                                    </span>{' '}
+                                                    <span>
+                                                        ₹
+                                                        {
+                                                            product.discountedPrice
+                                                        }
+                                                    </span>{' '}
+                                                    <small className="text-success">
+                                                        ({product.discount}%
+                                                        OFF)
+                                                    </small>
+                                                </>
+                                            ) : (
+                                                <>₹{product.price}</>
+                                            )}
+                                        </p>
+
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() =>
+                                                handleAddToCart(product)
+                                            }
+                                        >
+                                            Add to Cart
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="col-12 text-center">
-                        <p>No products found.</p>
-                    </div>
-                )}
+                        ))
+                    ) : (
+                        <p className="text-center text-muted">
+                            No products found in this category.
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
+
 export default Products;

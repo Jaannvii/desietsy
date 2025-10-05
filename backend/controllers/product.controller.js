@@ -67,10 +67,7 @@ const createProduct = async (req, res) => {
             });
         }
 
-        if (
-            !image.startsWith('http') ||
-            (!image.endsWith('.jpg') && !image.endsWith('.png'))
-        ) {
+        if (!image.startsWith('http')) {
             return res.status(400).json({
                 message: 'Image URL should be valid',
             });
@@ -80,12 +77,7 @@ const createProduct = async (req, res) => {
             categoryName: categoryName.trim(),
         });
         if (!category) {
-            if (
-                !categoryImage ||
-                !categoryImage.startsWith('http') ||
-                (!categoryImage.endsWith('.jpg') &&
-                    !categoryImage.endsWith('.png'))
-            ) {
+            if (!categoryImage || !categoryImage.startsWith('http')) {
                 return res.status(400).json({
                     message:
                         'New category must include a valid category image URL.',
@@ -98,15 +90,26 @@ const createProduct = async (req, res) => {
             await category.save();
         }
 
+        const priceNum =
+            price !== undefined && price !== '' ? Number(price) : 0;
+        const discountNum =
+            discount !== undefined && discount !== '' ? Number(discount) : 0;
+
+        const discountedPrice =
+            discountNum > 0
+                ? Number((priceNum * (1 - discountNum / 100)).toFixed(2))
+                : priceNum;
+
         const product = await Product.create({
             artisanId: artisan._id,
             name,
             description,
-            price,
+            price: priceNum,
             category: category._id,
             image,
             stock: stock || 0,
-            discount: discount || 0,
+            discount: discountNum || 0,
+            discountedPrice,
         });
 
         await product.save();
@@ -130,15 +133,20 @@ const getCategories = async (req, res) => {
             {
                 $lookup: {
                     from: 'products',
-                    localField: '_id',
-                    foreignField: 'category',
+                    let: { categoryId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$category', '$$categoryId'] },
+                                isApproved: true,
+                            },
+                        },
+                    ],
                     as: 'products',
                 },
             },
             {
-                $match: {
-                    'products.0': { $exists: true },
-                },
+                $match: { 'products.0': { $exists: true } },
             },
             {
                 $project: {
@@ -160,10 +168,27 @@ const getCategories = async (req, res) => {
 
 const getProducts = async (req, res) => {
     try {
-        const filter = {};
-        if (req.query.category) {
-            filter.category = req.query.category;
+        const filter = { isApproved: true };
+
+        if (req.user?._id && req.user.role === 'Artisan') {
+            const artisan = await Artisan.findOne({ userId: req.user._id });
+            if (!artisan) {
+                return res.status(400).json({ message: 'Artisan not found' });
+            }
+            filter = { artisanId: artisan._id };
         }
+
+        if (req.query.category) {
+            const category = await Category.findOne({
+                categoryName: req.query.category,
+            });
+            if (category) {
+                filter.category = category._id;
+            } else {
+                return res.status(404).json({ message: 'Category not found' });
+            }
+        }
+
         const products = await Product.find(filter).populate('category');
         return res.status(200).json(products);
     } catch (err) {
@@ -197,16 +222,64 @@ const getProductById = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const productId = req.params.id;
-        const updates = req.body;
+        const { categoryName, categoryImage, price, discount, ...rest } =
+            req.body;
 
-        const product = await Product.findByIdAndUpdate(productId, updates, {
-            new: true,
-        });
-        if (!product) {
+        const updates = { ...rest };
+
+        if (categoryName) {
+            let category = await Category.findOne({
+                categoryName: categoryName.trim(),
+            });
+
+            if (!category) {
+                if (!categoryImage || !categoryImage.startsWith('http')) {
+                    return res.status(400).json({
+                        message:
+                            'New category must include a valid category image URL.',
+                    });
+                }
+                category = await Category.create({
+                    categoryName: categoryName.trim(),
+                    categoryImage,
+                });
+                await category.save();
+            } else if (categoryImage) {
+                category.categoryImage = categoryImage;
+                await category.save();
+            }
+
+            updates.category = category._id;
+        }
+
+        const existing = await Product.findById(productId);
+        if (!existing) {
             return res.status(400).json({
                 message: 'Product not found',
             });
         }
+
+        if (price !== undefined || discount !== undefined) {
+            const priceNum =
+                price !== undefined && price !== ''
+                    ? Number(price)
+                    : existing.price;
+            const discountNum =
+                discount !== undefined && discount !== ''
+                    ? Number(discount)
+                    : existing.discount || 0;
+
+            updates.price = priceNum;
+            updates.discount = discountNum;
+            updates.discountedPrice =
+                discountNum > 0
+                    ? Number((priceNum * (1 - discountNum / 100)).toFixed(2))
+                    : priceNum;
+        }
+
+        const product = await Product.findByIdAndUpdate(productId, updates, {
+            new: true,
+        }).populate('category');
 
         return res.status(200).json({
             message: 'Product updated successfully',
@@ -224,11 +297,21 @@ const deleteProduct = async (req, res) => {
     try {
         const productId = req.params.id;
 
-        const product = await Product.findByIdAndDelete(productId);
+        const product = await Product.findById(productId);
         if (!product) {
             return res.status(400).json({
                 message: 'Product not found',
             });
+        }
+
+        const categoryId = product.category;
+
+        await Product.findByIdAndDelete(productId);
+
+        const remainingProducts = await Product.find({ category: categoryId });
+
+        if (remainingProducts.length === 0) {
+            await Category.findByIdAndDelete(categoryId);
         }
 
         return res.status(200).json({

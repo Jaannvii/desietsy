@@ -7,11 +7,15 @@ const API_URL = import.meta.env.VITE_API_URL;
 const ArtisanDashboard = () => {
     const [profile, setProfile] = useState(null);
     const [products, setProducts] = useState([]);
+
     const [detailsMessage, setDetailsMessage] = useState('');
     const [detailsSuccess, setDetailsSuccess] = useState(false);
 
     const [productMessage, setProductMessage] = useState('');
     const [productSuccess, setProductSuccess] = useState(false);
+
+    const [productDeleteMessage, setProductDeleteMessage] = useState('');
+    const [productDeleteSuccess, setProductDeleteSuccess] = useState('false');
 
     const [formData, setFormData] = useState({
         shopName: '',
@@ -30,7 +34,8 @@ const ArtisanDashboard = () => {
         name: '',
         description: '',
         price: '',
-        category: '',
+        categoryName: '',
+        categoryImage: '',
         image: '',
         stock: '',
         discount: '',
@@ -67,7 +72,13 @@ const ArtisanDashboard = () => {
                 },
             });
         } catch (err) {
-            console.error('Error fetching profile:', err);
+            setDetailsMessage('Error fetching profile');
+            setDetailsSuccess(false);
+        } finally {
+            setTimeout(() => {
+                setDetailsMessage('');
+                setDetailsSuccess(null);
+            }, 3000);
         }
     };
 
@@ -96,22 +107,26 @@ const ArtisanDashboard = () => {
                     withCredentials: true,
                     headers: { 'Content-Type': 'application/json' },
                 });
-                showDetailsMessage('Profile updated successfully!', true);
+                setDetailsMessage('Profile updated successfully!');
+                setDetailsSuccess(true);
             } else {
                 await axios.put(`${API_URL}/artisan/profile`, payload, {
                     withCredentials: true,
                     headers: { 'Content-Type': 'application/json' },
                 });
-                showDetailsMessage('Profile details added successfully!', true);
+                setDetailsMessage('Profile details added successfully!');
+                setDetailsSuccess(true);
             }
 
             fetchProfile();
         } catch (err) {
-            console.error('Error saving profile:', err);
-            showDetailsMessage(
-                err.response?.data?.message || 'Failed to save profile',
-                false
-            );
+            setDetailsMessage('Failed to save profile');
+            setDetailsSuccess(false);
+        } finally {
+            setTimeout(() => {
+                setDetailsMessage('');
+                setDetailsSuccess(null);
+            }, 3000);
         }
     };
 
@@ -121,7 +136,7 @@ const ArtisanDashboard = () => {
             const res = await axios.get(`${API_URL}/product/`, {
                 withCredentials: true,
             });
-            setProducts(res.data.filter((p) => p.artisanId === profile._id));
+            setProducts(res.data);
         } catch (err) {
             console.error('Error fetching products:', err);
         }
@@ -135,6 +150,15 @@ const ArtisanDashboard = () => {
             (cat) => cat.name.toLowerCase() === categoryName.toLowerCase()
         );
         setCategoryExists(exists);
+
+        if (exists) {
+            const cat = categories.find(
+                (cat) => cat.name.toLowerCase() === categoryName.toLowerCase()
+            );
+            setProductData((prev) => ({ ...prev, categoryImage: cat.image }));
+        } else {
+            setProductData((prev) => ({ ...prev, categoryImage: '' }));
+        }
     };
 
     const createProduct = async () => {
@@ -142,32 +166,72 @@ const ArtisanDashboard = () => {
             !productData.name ||
             !productData.description ||
             !productData.price ||
-            !productData.category ||
+            !productData.categoryName ||
             !productData.image
         ) {
-            showProductMessage('Please fill all required fields.', false);
+            setProductMessage('Please fill all required fields.');
+            setProductSuccess(false);
             return;
         }
 
+        const payload = {
+            name: productData.name.trim(),
+            description: productData.description.trim(),
+            price: Number(productData.price),
+            image: productData.image.trim(),
+            stock: productData.stock ? Number(productData.stock) : 0,
+            discount: productData.discount ? Number(productData.discount) : 0,
+            categoryName: productData.categoryName.trim(),
+            categoryImage: categoryExists
+                ? null
+                : productData.categoryImage.trim(),
+        };
+
         try {
-            await axios.post(`${API_URL}/product/create`, productData, {
+            await axios.post(`${API_URL}/product/create`, payload, {
                 withCredentials: true,
             });
             resetProductForm();
             fetchProducts();
-            showProductMessage('Product created successfully!', true);
-        } catch (err) {
-            console.error(err);
-            showProductMessage(
-                err.response?.data?.message || 'Failed to create product.',
-                false
+            setProductMessage(
+                'Product created successfully! Awaiting admin approval.'
             );
+            setProductSuccess(true);
+        } catch (err) {
+            const msg =
+                err.response?.data?.message || 'Failed to create product.';
+            if (err.response?.status === 400) {
+                setProductMessage(msg);
+                setProductSuccess(false);
+            } else if (err.response?.status === 403) {
+                setProductMessage(msg);
+                setProductSuccess(false);
+            } else {
+                setProductMessage('Failed to create product.');
+                setProductSuccess(false);
+            }
+        } finally {
+            setTimeout(() => {
+                setProductMessage('');
+                setProductSuccess(null);
+            }, 3000);
         }
     };
 
     const startEditProduct = (product) => {
+        const categoryObj = product.category;
         setEditProductId(product._id);
-        setProductData(product);
+        setProductData({
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            categoryName: categoryObj?.categoryName || '',
+            categoryImage: categoryObj?.categoryImage || '',
+            image: product.image,
+            stock: product.stock,
+            discount: product.discount,
+        });
+        setCategoryExists(!!categoryObj);
     };
 
     const updateProduct = async () => {
@@ -182,25 +246,36 @@ const ArtisanDashboard = () => {
             setEditProductId(null);
             resetProductForm();
             fetchProducts();
-            showProductMessage('Product updated successfully!', true);
+            setProductMessage('Product updated successfully!');
+            setProductSuccess(true);
         } catch (err) {
-            console.error(err);
-            showProductMessage(
-                err.response?.data?.message || 'Failed to update product.',
-                false
-            );
+            setProductMessage('Failed to update product.');
+            setProductSuccess(false);
+        } finally {
+            setTimeout(() => {
+                setProductMessage('');
+                setProductSuccess(null);
+            }, 3000);
         }
     };
 
     const deleteProduct = async (id) => {
         try {
-            await axios.delete(`${API_URL}/product/${id}`, {
+            if (!window.confirm('Delete this product?')) return;
+            await axios.delete(`${API_URL}/product/delete/${id}`, {
                 withCredentials: true,
             });
+            setProductDeleteMessage('Product deleted successfully!');
+            setProductDeleteSuccess(true);
             fetchProducts();
         } catch (err) {
-            console.error(err);
-            showProductMessage('Failed to delete product.', false);
+            setProductDeleteMessage('Failed to delete product.');
+            setProductDeleteSuccess(false);
+        } finally {
+            setTimeout(() => {
+                setProductDeleteMessage('');
+                setProductDeleteSuccess(null);
+            }, 3000);
         }
     };
 
@@ -209,24 +284,13 @@ const ArtisanDashboard = () => {
             name: '',
             description: '',
             price: '',
-            category: '',
+            categoryName: '',
+            categoryImage: '',
             image: '',
             stock: '',
             discount: '',
         });
         setCategoryExists(false);
-    };
-
-    const showDetailsMessage = (msg, isSuccess) => {
-        setDetailsMessage(msg);
-        setDetailsSuccess(isSuccess);
-        setTimeout(() => setDetailsMessage(''), 3000);
-    };
-
-    const showProductMessage = (msg, isSuccess) => {
-        setProductMessage(msg);
-        setProductSuccess(isSuccess);
-        setTimeout(() => setProductMessage(''), 3000);
     };
 
     useEffect(() => {
@@ -325,7 +389,7 @@ const ArtisanDashboard = () => {
                         </div>
                         {detailsMessage && (
                             <p
-                                className={`${
+                                className={`text-center ${
                                     detailsSuccess
                                         ? 'text-success'
                                         : 'text-danger'
@@ -381,7 +445,7 @@ const ArtisanDashboard = () => {
                                 onChange={(e) =>
                                     setProductData({
                                         ...productData,
-                                        price: e.target.value,
+                                        price: e.target.valueAsNumber,
                                     })
                                 }
                             />
@@ -397,7 +461,7 @@ const ArtisanDashboard = () => {
                             />
                         </div>
 
-                        {!categoryExists && (
+                        {!categoryExists || editProductId ? (
                             <div className="col-md-4">
                                 <input
                                     type="text"
@@ -412,7 +476,7 @@ const ArtisanDashboard = () => {
                                     }
                                 />
                             </div>
-                        )}
+                        ) : null}
 
                         <div className="col-md-4">
                             <input
@@ -452,7 +516,7 @@ const ArtisanDashboard = () => {
                                 onChange={(e) =>
                                     setProductData({
                                         ...productData,
-                                        discount: e.target.value,
+                                        discount: e.target.valueAsNumber,
                                     })
                                 }
                             />
@@ -492,6 +556,17 @@ const ArtisanDashboard = () => {
             <div className="container card shadow-sm">
                 <div className="card-body">
                     <h4 className="mb-3 title">My Products</h4>
+                    {productDeleteMessage && (
+                        <p
+                            className={`text-center ${
+                                productDeleteSuccess
+                                    ? 'text-success'
+                                    : 'text-danger'
+                            } mt-3`}
+                        >
+                            {productDeleteMessage}
+                        </p>
+                    )}
                     <div className="row">
                         {products.length > 0 ? (
                             products.map((product) => (
@@ -517,7 +592,25 @@ const ArtisanDashboard = () => {
                                                 {product.description}
                                             </p>
                                             <p className="fw-bold">
-                                                ₹{product.price}
+                                                {product.discount > 0 ? (
+                                                    <>
+                                                        <span className="text-muted text-decoration-line-through">
+                                                            ₹{product.price}
+                                                        </span>{' '}
+                                                        <span>
+                                                            ₹
+                                                            {
+                                                                product.discountedPrice
+                                                            }
+                                                        </span>{' '}
+                                                        <small className="text-success">
+                                                            ({product.discount}%
+                                                            OFF)
+                                                        </small>
+                                                    </>
+                                                ) : (
+                                                    <>₹{product.price}</>
+                                                )}
                                             </p>
                                             <div className="d-flex gap-2">
                                                 <button

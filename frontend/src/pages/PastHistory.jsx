@@ -8,15 +8,18 @@ const PastHistory = () => {
     const [orders, setOrders] = useState([]);
 
     const fetchOrders = async () => {
-        const res = await axios.get(`${API_URL}/order`, {
-            withCredentials: true,
-        });
-        setOrders(
-            res.data.filter(
-                (order) =>
-                    order.status === 'Delivered' || order.status === 'Cancelled'
-            )
-        );
+        try {
+            const res = await axios.get(`${API_URL}/order/`, {
+                withCredentials: true,
+            });
+
+            const historyOrders = res.data.orders.filter(
+                (o) => o.orderStatus === 'Delivered'
+            );
+            setOrders(historyOrders);
+        } catch (err) {
+            console.error('Error fetching past history:', err);
+        }
     };
 
     useEffect(() => {
@@ -24,46 +27,74 @@ const PastHistory = () => {
     }, []);
 
     return (
-        <div className="py-4 bgColor">
-            <h2 className="mb-4 text-center title">Order History</h2>
-            {orders.length === 0 ? (
-                <p className="text-muted text-center">No past orders found.</p>
-            ) : (
-                <div className="table-responsive">
-                    <table className="table table-bordered table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th className="text-center py-2">Order ID</th>
-                                <th className="text-center py-2">Status</th>
-                                <th className="text-center py-2">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map((order) => (
-                                <tr key={order._id}>
-                                    <td>{order._id}</td>
-                                    <td>
-                                        <span
-                                            className={`badge ${
-                                                order.status === 'Delivered'
-                                                    ? 'bg-success'
-                                                    : 'bg-danger'
-                                            }`}
-                                        >
-                                            {order.status}
-                                        </span>
-                                    </td>
-                                    <td>
+        <div className="bgColor">
+            <div className="container">
+                <h1 className="py-4 text-center title">Past Orders</h1>
+
+                {orders.length === 0 ? (
+                    <p className="text-center text-muted">
+                        No delivered orders yet.
+                    </p>
+                ) : (
+                    <div className="d-flex flex-column gap-4">
+                        {orders.map((order) => (
+                            <div
+                                key={order._id}
+                                className="p-5 bg-white rounded-3 shadow-sm"
+                            >
+                                <p className="fw-bold text-secondary">
+                                    Order ID: {order._id}
+                                </p>
+
+                                {order.products.map((item) => (
+                                    <div
+                                        key={item._id}
+                                        className="d-flex align-items-center mb-3"
+                                    >
+                                        <img
+                                            src={item.productId?.image}
+                                            alt={item.productId?.name}
+                                            className="rounded me-3"
+                                            style={{
+                                                width: '150px',
+                                                height: '100px',
+                                                objectFit: 'cover',
+                                            }}
+                                        />
+                                        <div>
+                                            <h5 className="mb-1">
+                                                {item.productId?.name}
+                                            </h5>
+                                            <p className="text-muted mb-0">
+                                                Qty: {item.quantity}
+                                            </p>
+                                            <p className="text-muted mb-0">
+                                                Price: ₹
+                                                {item.productId
+                                                    ?.discountedPrice ||
+                                                    item.productId?.price}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <hr />
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <p className="fw-bold mb-0">
+                                        Total: ₹{order.totalAmount}
+                                    </p>
+                                    <p className="text-muted small mb-0">
+                                        Ordered At:{' '}
                                         {new Date(
                                             order.createdAt
                                         ).toLocaleString()}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

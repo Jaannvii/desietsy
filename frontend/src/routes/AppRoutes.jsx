@@ -1,25 +1,25 @@
 import { Routes, Route } from 'react-router-dom';
-import ProtectedRoute from '../components/ProtectedRoute.jsx';
-import AdminDashboard from '../components/Dashboards/AdminDashboard.jsx';
-import ArtisanDashboard from '../components/Dashboards/ArtisanDashboard.jsx';
-import OrderTracking from '../components/OrderTracking.jsx';
-import PastHistory from '../components/PastHistory.jsx';
-import Login from '../components/Login.jsx';
-import Register from '../components/Register.jsx';
-import ForgotPassword from '../components/ForgotPassword.jsx';
-import ResetPassword from '../components/ResetPassword.jsx';
-import VerifyEmail from '../components/VerifyEmail.jsx';
-import MainPage from '../components/Home.jsx';
-import Products from '../components/Products.jsx';
-import Cart from '../components/Cart.jsx';
-import Checkout from '../components/Checkout.jsx';
-import Payment from '../components/Payment.jsx';
+import ProtectedRoute from '../pages/ProtectedRoute.jsx';
+import AdminDashboard from '../pages/Dashboards/AdminDashboard.jsx';
+import ArtisanDashboard from '../pages/Dashboards/ArtisanDashboard.jsx';
+import OrderTracking from '../pages/OrderTracking.jsx';
+import PastHistory from '../pages/PastHistory.jsx';
+import Login from '../pages/Login.jsx';
+import Register from '../pages/Register.jsx';
+import ForgotPassword from '../pages/ForgotPassword.jsx';
+import ResetPassword from '../pages/ResetPassword.jsx';
+import VerifyEmail from '../pages/VerifyEmail.jsx';
+import MainPage from '../pages/Home.jsx';
+import Products from '../pages/Products.jsx';
+import Cart from '../pages/Cart.jsx';
+import Checkout from '../pages/Checkout.jsx';
+import Payment from '../pages/Payment.jsx';
 
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<MainPage />} />
-            <Route path="/products/:category" element={<Products />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />

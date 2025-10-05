@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/home.css';
 
-import Navbar from '../components/Navbar.jsx';
+import Navbar from '../pages/Navbar.jsx';
 
 const MainPage = () => {
     const navigate = useNavigate();
@@ -80,7 +80,7 @@ const MainPage = () => {
                                                 className="btn btn-outline-primary btn-sm"
                                                 onClick={() =>
                                                     navigate(
-                                                        `/products?category=${cat._id}`
+                                                        `/products?category=${cat.categoryName}`
                                                     )
                                                 }
                                             >

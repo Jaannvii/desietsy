@@ -40,7 +40,7 @@ const createOrder = async (req, res) => {
 
         if (
             !paymentMethod ||
-            !['Credit Card', 'PayPal', 'Cash on Delivery'].includes(
+            !['Credit Card', 'PayPal', 'Cash on Delivery', 'Razorpay'].includes(
                 paymentMethod
             )
         ) {
@@ -66,9 +66,11 @@ const createOrder = async (req, res) => {
 
         await newOrder.save();
 
-        res.status(200).json({ message: 'Order placed', order: newOrder });
+        return res
+            .status(200)
+            .json({ message: 'Order placed', order: newOrder });
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             message: 'Order creation failed',
             error: err.message,
         });
@@ -77,10 +79,18 @@ const createOrder = async (req, res) => {
 
 const getOrders = async (req, res) => {
     try {
-        const orders = await Order.find().populate('userId', 'username email');
-        res.status(200).json(orders);
+        const orders = await Order.find({ userId: req.user.id })
+            .populate('userId', 'username email')
+            .populate(
+                'products.productId',
+                'name price discountedPrice category image'
+            );
+        return res.status(200).json({
+            message: 'Orders fetched successfully',
+            orders,
+        });
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             message: 'Failed to fetch orders',
             error: err.message,
         });
@@ -96,9 +106,9 @@ const getOrderById = async (req, res) => {
             return res.status(400).json({ message: 'Order not found' });
         }
 
-        res.status(200).json(order);
+        return res.status(200).json(order);
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             message: 'Error fetching order',
             error: err.message,
         });
@@ -110,23 +120,28 @@ const updateOrderStatus = async (req, res) => {
         const orderId = req.params.id;
         const { paymentStatus, orderStatus } = req.body;
 
-        const updates = {
-            paymentStatus,
-            orderStatus,
-            updatedAt: Date.now(),
-        };
+        const order = await Order.findById(orderId);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
 
-        const order = await Order.findByIdAndUpdate(orderId, updates, {
-            new: true,
-        });
-        if (!order) return res.status(400).json({ message: 'Order not found' });
+        if (req.user.role !== 'Admin') {
+            return res
+                .status(403)
+                .json({ message: 'Not authorized to update order status' });
+        }
 
-        res.status(200).json({
+        if (orderStatus) order.orderStatus = orderStatus;
+        if (paymentStatus) order.paymentStatus = paymentStatus;
+
+        order.updatedAt = Date.now();
+
+        const updatedOrder = await order.save();
+
+        return res.status(200).json({
             message: 'Order status updated successfully',
-            order,
+            order: updatedOrder,
         });
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             message: 'Failed to update order status',
             error: err.message,
         });
@@ -142,13 +157,43 @@ const deleteOrder = async (req, res) => {
             return res.status(400).json({ message: 'Order not found' });
         }
 
-        res.status(200).json({ message: 'Order deleted successfully' });
+        return res.status(200).json({ message: 'Order deleted successfully' });
     } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             message: 'Failed to delete order',
             error: err.message,
         });
     }
 };
 
-export { createOrder, getOrders, getOrderById, updateOrderStatus, deleteOrder };
+const cancelOrder = async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.id,
+            userId: req.user._id,
+        });
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        if (order.orderStatus === 'Delivered')
+            return res
+                .status(400)
+                .json({ message: 'Delivered order cannot be cancelled' });
+
+        await Order.findByIdAndDelete(order._id);
+
+        return res.json({ message: 'Order cancelled successfully', order });
+    } catch (err) {
+        return res
+            .status(500)
+            .json({ message: 'Server error', error: err.message });
+    }
+};
+
+export {
+    createOrder,
+    getOrders,
+    getOrderById,
+    updateOrderStatus,
+    deleteOrder,
+    cancelOrder,
+};
