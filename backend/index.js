@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import db from './config/db.js';
 import cookieParser from 'cookie-parser';
+import {config} from './config.js';
 
 import userRouter from './routes/auth.route.js';
 import artisanRouter from './routes/artisan.route.js';
@@ -16,11 +17,11 @@ import './config/passport.js';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = config.PORT || 5000;
 
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL,
+        origin: config.FRONTEND_URL,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
