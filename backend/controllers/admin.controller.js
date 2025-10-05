@@ -80,7 +80,13 @@ const approveProduct = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.find();
+        const orders = await Order.find()
+            .populate('userId', 'username email')
+            .populate({
+                path: 'products.productId',
+                model: 'Product',
+                select: 'name price category image',
+            });
         res.status(200).json(orders);
     } catch (err) {
         res.status(500).json({
