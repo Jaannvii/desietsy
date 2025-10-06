@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, role }) => {
                 setLoading(false);
             }
         };
-        setTimeout(fetchUser, 100);
+        fetchUser();
     }, []);
 
     if (loading) return <p>Loading...</p>;
