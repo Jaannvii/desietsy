@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.model.js';
-import {config} from '../config.js';
 
 const isLoggedIn = async (req, res, next) => {
     try {
@@ -8,7 +7,7 @@ const isLoggedIn = async (req, res, next) => {
         if (!token) {
             return res.status(401).json({ message: 'Authentication Failed' });
         }
-        const decoded = jwt.verify(token, config.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const user = await User.findById(decoded.id).select('-password');
         if (!user) {

@@ -5,7 +5,6 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import {config} from '../config.js';
 
 const registerUser = async (req, res) => {
     const { username, email, password, role } = req.body;
@@ -69,18 +68,18 @@ const registerUser = async (req, res) => {
                 host: 'sandbox.smtp.mailtrap.io',
                 port: 2525,
                 auth: {
-                    user: config.MAILTRAP_USER,
-                    pass: config.MAILTRAP_PASS,
+                    user: process.env.MAILTRAP_USER,
+                    pass: process.env.MAILTRAP_PASS,
                 },
             });
 
             const mailOptions = {
-                from: `"${config.MAILTRAP_SENDERNAME}" <${config.MAILTRAP_SENDEREMAIL}>`,
+                from: `"${process.env.MAILTRAP_SENDERNAME}" <${process.env.MAILTRAP_SENDEREMAIL}>`,
                 to: user.email,
                 subject: 'Verify your email',
                 text:
                     'Please verify your email by clicking the link below:\n\n' +
-                    `${config.FRONTEND_URL}/auth/verify-email/${token}`,
+                    `${process.env.FRONTEND_URL}/auth/verify-email/${token}`,
             };
 
             await transport.sendMail(mailOptions);
@@ -169,9 +168,9 @@ const loginUser = async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, role: user.role },
-            config.JWT_SECRET,
+            process.env.JWT_SECRET,
             {
-                expiresIn: config.JWT_EXPIRE_TIME,
+                expiresIn: process.env.JWT_EXPIRE_TIME,
             }
         );
 
@@ -247,18 +246,18 @@ const forgotPassword = async (req, res) => {
             host: 'sandbox.smtp.mailtrap.io',
             port: 2525,
             auth: {
-                user:config.MAILTRAP_USER,
-                pass: config.MAILTRAP_PASS,
+                user: process.env.MAILTRAP_USER,
+                pass: process.env.MAILTRAP_PASS,
             },
         });
 
         const mailOptions = {
-            from: `"${config.MAILTRAP_SENDERNAME}" <${config.MAILTRAP_SENDEREMAIL}>`,
+            from: `"${process.env.MAILTRAP_SENDERNAME}" <${process.env.MAILTRAP_SENDEREMAIL}>`,
             to: user.email,
             subject: 'Password Reset',
             text:
                 `Please click on the following link:\n\n` +
-                `${config.BASE_URL}/api/desietsy/reset-password/${resetToken}`,
+                `${process.env.BASE_URL}/api/desietsy/reset-password/${resetToken}`,
         };
         await transport.sendMail(mailOptions);
 

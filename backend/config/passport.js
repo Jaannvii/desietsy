@@ -3,16 +3,15 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.model.js';
 import jwt from 'jsonwebtoken';
-import {config} from '../config.js';
 
 dotenv.config();
 
 passport.use(
     new GoogleStrategy(
         {
-            clientID: config.GOOGLE_CLIENT_ID,
-            clientSecret: config.GOOGLE_CLIENT_SECRET,
-            callbackURL: `${config.BASE_URL}/auth/google/callback`,
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: `${process.env.BASE_URL}/auth/google/callback`,
         },
         async (profile, done) => {
             try {
@@ -30,9 +29,9 @@ passport.use(
 
                 const token = jwt.sign(
                     { id: user._id },
-                    config.JWT_SECRET,
+                    process.env.JWT_SECRET,
                     {
-                        expiresIn: config.JWT_EXPIRE_TIME,
+                        expiresIn: process.env.JWT_EXPIRE_TIME,
                     }
                 );
                 user.token = token;
