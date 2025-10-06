@@ -45,7 +45,6 @@ const Checkout = () => {
     };
 
     const handlePlaceOrder = async () => {
-        // validate delivery details
         if (
             !form.name ||
             !form.phone ||
@@ -83,7 +82,7 @@ const Checkout = () => {
 
                 const orderPayload = {
                     products: cartItems.map((item) => ({
-                        productId: item._id || item.id, // handle both
+                        productId: item._id || item.id,
                         quantity: item.quantity || 1,
                     })),
                     totalAmount: finalAmount,
@@ -99,7 +98,7 @@ const Checkout = () => {
 
                 try {
                     const res = await fetch(
-                        'http://localhost:5000/api/desietsy/order/create',
+                        'https://desi-etsy-dk8v.onrender.com/api/desietsy/order/create',
                         {
                             method: 'POST',
                             headers: {
